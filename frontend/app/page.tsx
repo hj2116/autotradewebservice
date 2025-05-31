@@ -3,7 +3,8 @@
 import { Box, Container, Heading, Text, VStack, Select, Button, Flex, FormControl, FormLabel, Input, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, SimpleGrid } from '@chakra-ui/react'
 import { useState } from 'react'
 import CandleChart from './components/CandleChart'
-import { ChartCanvas, Chart, CandlestickSeries, BarSeries, XAxis, YAxis, CrossHairCursor, MouseCoordinateX, MouseCoordinateY } from "react-financial-charts";
+
+
 
 const AVAILABLE_TICKERS = [
   { value: 'KRW-BTC', label: '비트코인 (BTC)' },
@@ -13,9 +14,9 @@ const AVAILABLE_TICKERS = [
 ];
 
 const STRATEGY_OPTIONS = [
-  { value: 'Inverse Volatility', label: 'Inverse Volatility' },
+  { value: 'InverseVolatility', label: 'Inverse Volatility' },
   { value: 'Trend', label: 'Trend' },
-  { value: 'Counter Trend', label: 'Counter Trend' },
+  { value: 'CounterTrend', label: 'Counter Trend' },
   { value: 'Spread', label: 'Spread' }
 ]
 
@@ -73,16 +74,44 @@ export default function Home() {
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyKey>('Inverse Volatility')
   const [strategyOptions, setStrategyOptions] = useState<Record<string, string>>({})
   const [trendType, setTrendType] = useState<string>("");
+  const [result, setResult] = useState<any>(null);
 
   const handleOptionChange = (name: string, value: string) => {
     setStrategyOptions(prev => ({ ...prev, [name]: value }));
     if (name === "trendType") setTrendType(value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // 전략 실행 로직 (추후 구현)
-    // strategyOptions에 각 옵션 값이 들어있음
+    const strategy = selectedStrategy
+    const options = strategyOptions
+    let tickers = [];
+    if(strategy === "Inverse Volatility") {
+      const numTickers = Number(strategyOptions.numTickers);
+       tickers = Array.from({ length: numTickers })
+        .map((_, idx) => strategyOptions[`ticker${idx}`])
+        .filter(Boolean);
+    } else {
+       tickers = [selectedTicker];
+    }
+    
+    const volatility_window = Number(strategyOptions.volatilityPeriod) || 20;
+
+    const response = await fetch(`http://localhost:8000/api/v1/trading/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        strategy,
+        options: {
+          tickers,
+          volatility_window,
+          ...options
+        }
+      })
+    });
+    const result = await response.json();
+    setResult(result);
+    console.log(result);
   }
 
   return (
@@ -182,7 +211,6 @@ export default function Home() {
                     )}
                   </FormControl>
                 ))}
-                {/* Trend 전략의 세부 옵션 동적 렌더링: 한 줄에 2개씩 */}
                 {selectedStrategy === "Trend" && trendType === "sma" && (
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {SMA_OPTIONS.map(opt => (
@@ -258,6 +286,20 @@ export default function Home() {
                 </Button>
               </VStack>
             </form>
+            {result && (
+              <Box mt={6} p={4} bg="gray.50" borderRadius="md">
+                <Text fontWeight="bold" mb={2}>전략 결과</Text>
+                {result.weights ? (
+                  <VStack align="start" spacing={1}>
+                    {Object.entries(result.weights).map(([ticker, weight]) => (
+                      <Text key={ticker}>{ticker}: {(weight as number * 100).toFixed(2)}%</Text>
+                    ))}
+                  </VStack>
+                ) : (
+                  <pre>{JSON.stringify(result, null, 2)}</pre>
+                )}
+              </Box>
+            )}
           </Box>
         </Flex>
       </VStack>
