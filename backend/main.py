@@ -4,6 +4,7 @@ from app.api.v1 import trading, market
 from app.core.config import settings
 from app.services.trading.inverseVolatility import InverseVolatilityStrategy
 from app.services.trading.trendFollowing import TrendFollowingStrategy
+from app.services.trading.counterTrend import CounterTrendStrategy
 from app.services.upbit_service import UpbitService
 
 
@@ -64,7 +65,10 @@ async def trading_execute(request: Request):
         signals = await strat.calculate_signals()
         return {"signals": signals}
     elif strategy == "CounterTrend":
-        return {"message": "CounterTrend 전략 처리 예정"}
+        upbit_service = UpbitService(settings.UPBIT_ACCESS_KEY, settings.UPBIT_SECRET_KEY)
+        strat = CounterTrendStrategy(upbit_service, options)
+        signals = await strat.calculate_signals()
+        return {"signals": signals}
     elif strategy == "Spread":
         return {"message": "Spread 전략 처리 예정"}
     else:

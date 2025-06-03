@@ -16,7 +16,9 @@ class InverseVolatilityStrategy:
         for ticker in self.tickers:
             candles = await self.upbit_service.get_daily_candles(ticker, self.volatility_window)
             closes = [candle['trade_price'] for candle in candles]
-            pct_changes = np.diff(closes) / closes[:-1]
+            pct_changes = []
+            for i in range(len(closes)-1):
+                pct_changes.append((closes[i+1]-closes[i])/closes[i])
             volatilities.append(np.std(pct_changes))
         if 0 in volatilities:
             return {"error": "0 변동성 발견"}

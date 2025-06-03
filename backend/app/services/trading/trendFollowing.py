@@ -14,6 +14,7 @@ class TrendFollowingStrategy(BaseStrategy):
         self.prevLongEma = 0
         self.prevNHigh = float('inf')
         self.prevNLow = float('-inf')
+        print(parameters)
 
         if(self.trendType == 'breakout'): # breakout 전략
             self.nDays = int(parameters.get('nDays', 20))
@@ -36,7 +37,7 @@ class TrendFollowingStrategy(BaseStrategy):
         for ticker in self.tickers:
             candles_from_api = await self.upbitService.get_daily_candles(ticker, self.nDays+1)
             candles.extend(candles_from_api)
-        candleswithoutrecent = candles[:-1]
+        candleswithoutrecent = candles[1:]
         self.prevNHigh = max(candleswithoutrecent, key=lambda x: x['high_price'])['high_price']
         self.prevNLow = min(candleswithoutrecent, key=lambda x: x['low_price'])['low_price']
         
@@ -61,7 +62,7 @@ class TrendFollowingStrategy(BaseStrategy):
         for ticker in self.tickers:
             candles_from_api = await self.upbitService.get_daily_candles(ticker, self.longWindow + 1)
             candles.extend(candles_from_api)
-        candleswithoutrecent = candles[:-1]
+        candleswithoutrecent = candles[1:]
         closes = [candle['trade_price'] for candle in candleswithoutrecent]
         shortSma = np.mean(closes[-self.shortWindow:])
         longSma = np.mean(closes[-self.longWindow:])
@@ -75,7 +76,7 @@ class TrendFollowingStrategy(BaseStrategy):
         for ticker in self.tickers:
             candles_from_api = await self.upbitService.get_daily_candles(ticker, self.longWindow+1)
             candles.extend(candles_from_api)
-        candleswithoutrecent = candles[:-1]
+        candleswithoutrecent = candles[1:]
         closes = [candle['trade_price'] for candle in candleswithoutrecent]
         
         if(self.prevShortEma == 0):

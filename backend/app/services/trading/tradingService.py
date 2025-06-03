@@ -4,6 +4,7 @@ import asyncio
 from .baseStrategy import BaseStrategy
 from .trendFollowing import TrendFollowingStrategy
 from ..upbit_service import UpbitService
+from .counterTrend import CounterTrendStrategy
 
 class TradingService:
     def __init__(self, upbit_service: UpbitService):
@@ -14,7 +15,9 @@ class TradingService:
     def create_strategy(self, strategy_name: str, market: str, parameters: Dict) -> BaseStrategy:
         """전략 인스턴스를 생성합니다."""
         if strategy_name == 'moving_average':
-            return MovingAverageStrategy(market, parameters)
+            return TrendFollowingStrategy(market, parameters)
+        elif strategy_name == 'counter_trend':
+            return CounterTrendStrategy(market, parameters)
         # 다른 전략들 추가 예정
         raise ValueError(f"Unknown strategy: {strategy_name}")
 

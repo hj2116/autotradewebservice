@@ -50,8 +50,9 @@ const STRATEGY_OPTION_FIELDS = {
       ]
     }
   ],
-  "Counter Trend": [
-    { name: "reversalStrength", label: "반전 강도", type: "number", placeholder: "예: 2" },
+  "CounterTrend": [
+    { name: "kValue", label: "K 값", type: "number", placeholder: "예: 2.2" },
+    { name: "nDays", label: "N 일", type: "number", placeholder: "예: 20" },
   ],
   "Spread": [
     {name: "ticker1", label: "티커1", type: "text", placeholder: "예: KRW-BTC"},
@@ -211,6 +212,41 @@ export default function Home() {
                     )}
                   </FormControl>
                 ))}
+                {selectedStrategy === "Trend" && (
+                  <>
+                    <FormControl>
+                      <FormLabel>티커 개수</FormLabel>
+                      <Input
+                        type="number"
+                        placeholder="예: 1"
+                        name="numTickers"
+                        size="sm"
+                        value={strategyOptions["numTickers"] || ""}
+                        onChange={e => handleOptionChange("numTickers", e.target.value)}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>티커 선택</FormLabel>
+                      <VStack spacing={2} align="stretch">
+                        {Array.from({ length: Number(strategyOptions.numTickers) || 0 }).map((_, idx) => (
+                          <Select
+                            key={idx}
+                            placeholder={`티커 #${idx + 1}`}
+                            value={strategyOptions[`ticker${idx}`] || ""}
+                            onChange={e => handleOptionChange(`ticker${idx}`, e.target.value)}
+                            size="sm"
+                          >
+                            {AVAILABLE_TICKERS
+                              .filter(t => !Object.values(strategyOptions).includes(t.value) || strategyOptions[`ticker${idx}`] === t.value)
+                              .map(ticker => (
+                                <option key={ticker.value} value={ticker.value}>{ticker.label}</option>
+                              ))}
+                          </Select>
+                        ))}
+                      </VStack>
+                    </FormControl>
+                  </>
+                )}
                 {selectedStrategy === "Trend" && trendType === "sma" && (
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {SMA_OPTIONS.map(opt => (
